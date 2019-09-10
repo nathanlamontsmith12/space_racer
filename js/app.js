@@ -5,7 +5,7 @@ class Ship {
 
     }
     handleInput(key){
-
+        console.log("KEY: ", key)
     }
     move(){
 
@@ -14,7 +14,7 @@ class Ship {
 
     }
     getHitbox(){
-        
+        // return data object representing collision box for player
     }
 }
 
@@ -27,13 +27,13 @@ class Obstacle {
         this.height = h
     }
     isOffscreen(){
-        
+        // return true or false
     }
     move(speed){
-
+        // move down by the speed 
     }
     draw(){
-
+        
     }
     overlaps(playerHitBox){
         let overlaps = false; 
@@ -44,12 +44,13 @@ class Obstacle {
 
 class CPU {
     constructor(){
-        this.obstacles = [],
-        this.timer = 0,
-        this.countdown = 100,
-        this.difficulty = 1
+        this.obstacles = [];
+        this.beatenObstacles = 0;
+        this.difficulty = 1;
     }
     collided(playerHitBox){
+        console.log("player hitbox:")
+        console.log(playerHitBox)
         let isCollision = false;
         for (let i = 0; i < this.obstacles.length; i++) {
             if (this.obstacles[i].overlaps(playerHitBox)){
@@ -67,7 +68,8 @@ class CPU {
         this.obstacles.forEach(obs => obs.move(speed))
     }
     generateObstacleSet(){
-
+        // generate increasing number of obstacles based on difficulty 
+        // set timer for this method to be called again 
     }
     removeObstacles(){
         for (let i = 0; i < this.obstacles.length; i++) {
@@ -97,7 +99,7 @@ const game = {
     checkCollisions(){
         const hitbox = this.player.getHitbox();
         if (this.cpu.collided(hitbox)){
-
+            this.handleDeath();
         }
     },
     handleDeath(){
