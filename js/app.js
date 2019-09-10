@@ -13,11 +13,70 @@ class Ship {
     draw(){
 
     }
+    getHitbox(){
+        
+    }
+}
+
+class Obstacle {
+    constructor(x, y, w, h){
+        active: true;
+        this.x = x;
+        this.y = y; 
+        this.width = w;
+        this.height = h
+    }
+    isOffscreen(){
+        
+    }
+    move(speed){
+
+    }
+    draw(){
+
+    }
+    overlaps(playerHitBox){
+        let overlaps = false; 
+        // LOGIC 
+        return overlaps;
+    }
 }
 
 class CPU {
     constructor(){
+        this.obstacles = [],
+        this.timer = 0,
+        this.countdown = 100,
+        this.difficulty = 1
+    }
+    collided(playerHitBox){
+        let isCollision = false;
+        for (let i = 0; i < this.obstacles.length; i++) {
+            if (this.obstacles[i].overlaps(playerHitBox)){
+                isCollision = true;
+                break;
+            }
+        }
+        return isCollision;
+    }
+    drawObstacles(){
+        this.obstacles.forEach(obs => obs.draw())
+    }
+    moveObstacles(){
+        const speed = this.difficulty;
+        this.obstacles.forEach(obs => obs.move(speed))
+    }
+    generateObstacleSet(){
 
+    }
+    removeObstacles(){
+        for (let i = 0; i < this.obstacles.length; i++) {
+            if (this.obstacles[i].isOffscreen()){
+                this.obstacles[i].active = false;
+            }
+        }
+        const newObstacleSet = this.obstacles.filter(obs => obs.active)
+        this.obstacles = newObstacleSet;
     }
 }
 
@@ -28,25 +87,32 @@ const game = {
     lives: 5,
     cpu: null,
     active: false,
-    clearDisplay(){
+    clearScreen(){
         this.ctx.clearRect(-200, -200, 1000, 1000);
     },
-    makeDisplay(){
-
+    fillScreen(){
+        this.player.draw();
+        this.cpu.draw();
     },
     checkCollisions(){
+        const hitbox = this.player.getHitbox();
+        if (this.cpu.collided(hitbox)){
 
+        }
     },
     handleDeath(){
         // do other stuff 
         this.lives--;
-        this.displayLives();
+        this.updateLivesDisplay();
     },
-    displayLives(){
+    clearLivesDisplay(){
         const livesDisplay = document.getElementById("lives-display");
         if (livesDisplay) {
             bottom.removeChild(livesDisplay);
         }
+    },
+    updateLivesDisplay(){
+        this.clearLivesDisplay();
         const newDisplay = document.createElement("div")
         newDisplay.id = "lives-display"
         for (let i = 1; i <= this.lives; i++) {
@@ -64,6 +130,7 @@ const game = {
         this.active = true;
         this.player = new Ship();
         this.cpu = new CPU();
+        this.cpu.generateObstacleSet();
         this.displayLives();
         animate();
     }
@@ -73,8 +140,8 @@ const game = {
 // global animate function: 
 
 function animate(){
-    game.clearDisplay();
-    game.makeDisplay();
+    game.clearScreen();
+    game.fillScreen();
     game.checkCollisions();
     game.animation = window.requestAnimationFrame(animate)
 }
