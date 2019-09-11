@@ -53,21 +53,28 @@ class Ship {
 }
 
 class Obstacle {
-    constructor(x, y, w, h){
+    constructor(x, s){
         active: true;
         this.x = x;
-        this.y = y; 
-        this.width = w;
-        this.height = h
+        this.y = 5; 
+        this.w = 5;
+        this.h = 5;
+        this.speed = s;
     }
     isOffscreen(){
         // return true or false
+        if(this.y > game.ctx.canvas.height + 100) {
+            return true;
+        } else {
+            return false;
+        }
     }
     move(speed){
         // move down by the speed 
+        this.y += this.speed;
     }
     draw(){
-        
+        game.ctx.fillRect(this.x, this.y, this.w, this.h)
     }
     overlaps(playerHitBox){
         let overlaps = false; 
@@ -96,12 +103,19 @@ class CPU {
         this.obstacles.forEach(obs => obs.draw())
     }
     moveObstacles(){
-        const speed = this.difficulty;
-        this.obstacles.forEach(obs => obs.move(speed))
+        this.obstacles.forEach(obs => obs.move())
     }
-    generateObstacleSet(){
-        // generate increasing number of obstacles based on difficulty 
-        // set timer for this method to be called again 
+    generateObstacleSet(num){
+        for (let i = 0; i < num; i++){
+            const randX = Math.floor(Math.random()*game.ctx.canvas.width)
+            const s = this.getSpeedBasedOnDifficulty();
+            const newObs = new Obstacle(randX, s)
+            this.obstacles.push(newObs)
+        }
+    }
+    getSpeedBasedOnDifficulty(){
+        const randFactor = Math.floor(Math.random()*5) + 1;
+        return randFactor * this.difficulty;
     }
     removeObstacles(){
         for (let i = 0; i < this.obstacles.length; i++) {
@@ -165,7 +179,7 @@ const game = {
         this.active = true;
         this.player = new Ship();
         this.cpu = new CPU();
-        this.cpu.generateObstacleSet();
+        this.cpu.generateObstacleSet(5);
         this.updateLivesDisplay();
         animate();
     }
@@ -178,6 +192,7 @@ function animate(){
     game.clearScreen();
     game.fillScreen();
     game.checkCollisions();
+    game.cpu.moveObstacles();
     game.animation = window.requestAnimationFrame(animate)
 }
 
