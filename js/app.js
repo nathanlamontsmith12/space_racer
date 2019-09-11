@@ -44,17 +44,17 @@ class Ship {
     }
     getHitbox(){
         return({
-            xmin: this.x,
-            xmax: this.x + this.w,
-            ymin: this.y,
-            ymax: this.y + this.h
+            minX: this.x,
+            maxX: this.x + this.w,
+            minY: this.y,
+            maxY: this.y + this.h
         })
     }
 }
 
 class Obstacle {
     constructor(x, s){
-        active: true;
+        this.active = true;
         this.x = x;
         this.y = 5; 
         this.w = 5;
@@ -72,13 +72,24 @@ class Obstacle {
     move(speed){
         // move down by the speed 
         this.y += this.speed;
+        if (this.isOffscreen()){
+            this.active = false;
+        }
     }
     draw(){
         game.ctx.fillRect(this.x, this.y, this.w, this.h)
     }
-    overlaps(playerHitBox){
-        let overlaps = false; 
-        // LOGIC 
+    overlaps(PHB){
+        // PHB -> "Player Hit Box" {minX: num, maxX: num, minY: num, maxY: num}
+        let overlaps = false;         
+        if (
+            this.x >= PHB.minX && 
+            this.x + this.w <= PHB.maxX &&
+            this.y >= PHB.minY &&
+            this.y + this.h <= PHB.maxY
+            ){
+            overlaps = true;
+        }
         return overlaps;
     }
 }
@@ -88,43 +99,52 @@ class CPU {
         this.obstacles = [];
         this.beatenObstacles = 0;
         this.difficulty = 1;
+        this.countdown = 0;
+        this.sets = 0;
     }
     collided(playerHitBox){
         let isCollision = false;
         for (let i = 0; i < this.obstacles.length; i++) {
-            if (this.obstacles[i].overlaps(playerHitBox)){
+            if (this.obstacles[i].overlaps(playerHitBox) && this.obstacles[i].active){
                 isCollision = true;
-                break;
+                this.obstacles[i].active = false;
             }
         }
         return isCollision;
     }
     drawObstacles(){
-        this.obstacles.forEach(obs => obs.draw())
+        this.obstacles.forEach(obs => {
+            if (obs.active) {
+                obs.draw()
+            }
+        })
     }
     moveObstacles(){
         this.obstacles.forEach(obs => obs.move())
     }
-    generateObstacleSet(num){
-        for (let i = 0; i < num; i++){
+    generateObstacleSet(){
+        const newObstacleSet = [];
+        for (let i = 0; i < game.obstaclesInSet; i++){
             const randX = Math.floor(Math.random()*game.ctx.canvas.width)
             const s = this.getSpeedBasedOnDifficulty();
             const newObs = new Obstacle(randX, s)
-            this.obstacles.push(newObs)
+            newObstacleSet.push(newObs)
         }
+        this.obstacles = newObstacleSet;
+        this.sets++;
+        this.countdown = (60 * (Math.floor(Math.random()*10) + 1)) + (game.ctx.canvas.height);
     }
     getSpeedBasedOnDifficulty(){
         const randFactor = Math.floor(Math.random()*5) + 1;
         return randFactor * this.difficulty;
     }
-    removeObstacles(){
-        for (let i = 0; i < this.obstacles.length; i++) {
-            if (this.obstacles[i].isOffscreen()){
-                this.obstacles[i].active = false;
-            }
+    nextFrame(){
+        this.moveObstacles();
+        if(this.countdown <= 0) {
+            this.generateObstacleSet()
+        } else {
+            this.countdown = this.countdown - 1;
         }
-        const newObstacleSet = this.obstacles.filter(obs => obs.active)
-        this.obstacles = newObstacleSet;
     }
 }
 
@@ -135,12 +155,15 @@ const game = {
     lives: 5,
     cpu: null,
     active: false,
+    obstaclesInSet: 5,
     clearScreen(){
         this.ctx.clearRect(-200, -200, 1000, 1000);
     },
-    fillScreen(){
+    handleNewFrame(){
         this.player.draw();
         this.cpu.drawObstacles();
+        this.checkCollisions();
+        this.cpu.nextFrame();
     },
     checkCollisions(){
         const hitbox = this.player.getHitbox();
@@ -150,6 +173,7 @@ const game = {
     },
     handleDeath(){
         // do other stuff 
+        console.log("HIT")
         this.lives--;
         this.updateLivesDisplay();
     },
@@ -179,7 +203,7 @@ const game = {
         this.active = true;
         this.player = new Ship();
         this.cpu = new CPU();
-        this.cpu.generateObstacleSet(5);
+        this.cpu.generateObstacleSet();
         this.updateLivesDisplay();
         animate();
     }
@@ -190,9 +214,7 @@ const game = {
 
 function animate(){
     game.clearScreen();
-    game.fillScreen();
-    game.checkCollisions();
-    game.cpu.moveObstacles();
+    game.handleNewFrame();
     game.animation = window.requestAnimationFrame(animate)
 }
 
