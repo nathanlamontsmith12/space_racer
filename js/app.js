@@ -1,20 +1,54 @@
 console.log("All linked up!")
 
 class Ship {
-    constructor(){
-
+    constructor(startX=275, startY=200, w=50, h=50, s=5){
+        this.x = startX;
+        this.y = startY;
+        this.w = w;
+        this.h = h;
+        this.speed = s;
+        this.limitX = game.ctx.canvas.width - w;
+        this.limitY = game.ctx.canvas.height - h;
     }
     handleInput(key){
-        console.log("KEY: ", key)
+        key = key.toLowerCase()
+        if (key === "arrowup" || key === "i" || key === "w") {
+            this.move("u")
+        }
+        if (key === "arrowdown" || key === "k" || key === "s") {
+            this.move("d")
+        }
+        if (key === "arrowleft" || key === "j" || key === "a") {
+            this.move("l")
+        }
+        if (key === "arrowright" || key === "l" || key === "d") {
+            this.move("r")
+        }
     }
-    move(){
-
+    move=(dir)=>{
+        if (dir === "u" && this.y - this.speed > 0) {
+                this.y = this.y - this.speed;
+        }
+        if (dir === "d" && this.y + this.speed < this.limitY){
+                this.y = this.y + this.speed;
+        }
+        if (dir === "l" && this.x - this.speed > 0){
+                this.x = this.x - this.speed;
+        }
+        if (dir === "r" && this.x + this.speed < this.limitX){
+                this.x = this.x + this.speed;
+        }
     }
     draw(){
-
+        game.ctx.fillRect(this.x, this.y, this.w, this.h);
     }
     getHitbox(){
-        // return data object representing collision box for player
+        return({
+            xmin: this.x,
+            xmax: this.x + this.w,
+            ymin: this.y,
+            ymax: this.y + this.h
+        })
     }
 }
 
@@ -49,8 +83,6 @@ class CPU {
         this.difficulty = 1;
     }
     collided(playerHitBox){
-        console.log("player hitbox:")
-        console.log(playerHitBox)
         let isCollision = false;
         for (let i = 0; i < this.obstacles.length; i++) {
             if (this.obstacles[i].overlaps(playerHitBox)){
@@ -94,7 +126,7 @@ const game = {
     },
     fillScreen(){
         this.player.draw();
-        this.cpu.draw();
+        this.cpu.drawObstacles();
     },
     checkCollisions(){
         const hitbox = this.player.getHitbox();
@@ -125,6 +157,7 @@ const game = {
         bottom.appendChild(newDisplay)
     },
     stop(){
+        this.active = false;
         window.cancelAnimationFrame(this.animation);
     },
     start(){
@@ -133,7 +166,7 @@ const game = {
         this.player = new Ship();
         this.cpu = new CPU();
         this.cpu.generateObstacleSet();
-        this.displayLives();
+        this.updateLivesDisplay();
         animate();
     }
 }
